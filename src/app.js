@@ -7,12 +7,12 @@ const express = require('express');
  dotenv.config();
  const app = express();
  const port = 3000;
- 
+
  
  app.use(bodyParser.json());
  
  
- 
+ app.use(express.json());
  
  app.use("/users", userRoutes);
  app.use("/posts", postRoutes);

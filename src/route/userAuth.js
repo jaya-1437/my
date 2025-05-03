@@ -2,9 +2,10 @@ const express = require('express');
 const { sendResponse } = require('../middleware/middleware');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const {validate,registerSchema,loginSchema,forgotPasswordSchema,verifyOtpSchema} = require('../middleware/userAuthValidation')
+const {validate,registerSchema,loginSchema,forgotPasswordSchema,verifyOtpSchema,resetPasswordSchema} = require('../middleware/userAuthValidation')
 const {generateTokens} = require('../utility/tokenUtil')
 const {sendMail} = require('../utility/nodeMailer')
+const { authenticateToken } = require("../middleware/authMiddlewarevalidation");
 let users = [];
 let refreshTokens = [];
 let userOtps = [];
@@ -48,7 +49,7 @@ router.post('/login',validate(loginSchema),async(req,res)=>{
  
     return sendResponse(res, 200, 'Login successful', { user: { id: user.id, email }, ...tokens });
 })
-//send otp
+
 router.post('/sendEmailOtp', validate(forgotPasswordSchema), async (req, res) => {
     const { email } = req.body;
  
@@ -116,5 +117,67 @@ router.post('/verify-otp', validate(verifyOtpSchema), async (req, res) => {
  
     return sendResponse(res, 200, 'OTP verified successfully');
 });
- 
+// Reset Password
+router.post("/reset-password", validate(resetPasswordSchema), async (req, res) => {
+    const { email, newPassword } = req.body;
+
+   
+    const userIndex = users.findIndex((u) => u.email === email);
+    if (userIndex === -1) {
+      return sendResponse(res, 404, "User not found");
+    }
+   
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      users[userIndex].password = hashedPassword;
+   
+      return sendResponse(res, 200, "Password reset successful");
+    } catch (error) {
+      return sendResponse(res, 500, "Failed to reset password");
+    }
+  });
+// Protected route
+router.get("/getUserDetail", authenticateToken, (req, res) => {
+    const user = users.find((u) => u.id === req.user.id);
+    if (!user) return sendResponse(res, 404, "User not found");
+   
+    return sendResponse(res, 200, "User data retrieved", {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      age: user.age,
+    });
+  });
+
+// user update
+  router.put("/updateUser", authenticateToken, (req, res) => {
+    try {
+      const user = users.find((u) => u.id === req.user.id);
+      if (!user) return sendResponse(res, 404, "User not found");
+  
+      const { name, email, age } = req.body;
+  
+      // Update only the provided fields
+      if (name) user.name = name;
+      if (email) user.email = email;
+      if (age) user.age = Number(age);
+  
+      return sendResponse(res, 200, "User updated successfully", {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        age: user.age,
+      });
+    } catch (error) {
+      console.error("Error updating user:", error);
+      return sendResponse(res, 500, "Internal Server Error");
+    }
+  });
+  
+  
+router.get('/getAllUser',authenticateToken, (req,res)=>{
+  return sendResponse(res, 200, 'Users retrieved successfully', users)
+ })
+
+
 module.exports = router
