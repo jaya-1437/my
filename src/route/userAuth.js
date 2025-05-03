@@ -2,10 +2,11 @@ const express = require('express');
 const { sendResponse } = require('../middleware/middleware');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const {validate,registerSchema,loginSchema,forgotPasswordSchema,verifyOtpSchema,resetPasswordSchema} = require('../middleware/userAuthValidation')
+const jwt = require('jsonwebtoken');
+const {validate,registerSchema,loginSchema,forgotPasswordSchema,verifyOtpSchema,resetPasswordSchema,refreshTokenSchema} = require('../middleware/userAuthValidation')
 const {generateTokens} = require('../utility/tokenUtil')
 const {sendMail} = require('../utility/nodeMailer')
-const { authenticateToken } = require("../middleware/authMiddlewarevalidation");
+const { authenticateToken,verifyRefreshToken } = require("../middleware/authMiddlewarevalidation");
 let users = [];
 let refreshTokens = [];
 let userOtps = [];
@@ -174,10 +175,27 @@ router.get("/getUserDetail", authenticateToken, (req, res) => {
     }
   });
   
-  
+  //get all users
 router.get('/getAllUser',authenticateToken, (req,res)=>{
   return sendResponse(res, 200, 'Users retrieved successfully', users)
  })
+
+// refresh-token
+router.post("/refresh-token", validate(refreshTokenSchema), (req, res) => {
+  const { token } = req.body;
+ 
+  if (!token || !refreshTokens.includes(token)) {
+    return sendResponse(res, 403, "Refresh token not found or expired");
+  }
+ 
+  try {
+    const user = verifyRefreshToken(token);
+    const accessToken = generateTokens(user).accessToken;
+    return sendResponse(res, 200, "Token refreshed", { accessToken });
+  } catch {
+    return sendResponse(res, 403, "Invalid refresh token");
+  }
+});
 
 
 module.exports = router
