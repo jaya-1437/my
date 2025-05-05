@@ -9,7 +9,8 @@ const {
   forgotPasswordSchema,
   verifyOtpSchema,
   resetPasswordSchema,
-  refreshTokenSchema
+  refreshTokenSchema,
+  getidschema
 } = require("../middleware/userAuthValidation");
 const { generateTokens,verifyRefreshToken } = require("../utility/tokenUtil");
 const { sendMail } = require("../utility/nodeMailer");
@@ -64,10 +65,7 @@ router.post("/login", validate(loginSchema), async (req, res) => {
   });
 });
 
-router.post(
-  "/sendEmailOtp",
-  validate(forgotPasswordSchema),
-  async (req, res) => {
+router.post("/sendEmailOtp",validate(forgotPasswordSchema),async (req, res) => {
     const { email } = req.body;
 
     const user = users.find((u) => u.email === email);
@@ -176,26 +174,6 @@ router.get("/getAllUsers", authenticateToken, (req, res) => {
   return sendResponse(res, 200, "get all users successfully", users);
 });
 
-// router.put("/updateUser", authenticateToken, (req, res) => {
-//     const userIndex = users.findIndex((u) => u.id === req.user.id);
-//     if (userIndex === -1) {
-//         return sendResponse(res, 404, "User not found");
-//     }
-
-//     const { name, email, age } = req.body;
-
-//     if (name) users[userIndex].name = name;
-//     if (email) users[userIndex].email = email;
-//     if (age) users[userIndex].age = age;
-
-//     return sendResponse(res, 200, "User updated successfully", {
-//         id: users[userIndex].id,
-//         name: users[userIndex].name,
-//         email: users[userIndex].email,
-//         age: users[userIndex].age,
-//     });
-// });
-
 router.put("/updateUser", authenticateToken, (req, res) => {
   const userIndex = users.findIndex((u) => u.id == req.user.id);
   if (userIndex == -1) {
@@ -225,6 +203,16 @@ router.post("/refresh-token", validate(refreshTokenSchema), (req, res) => {
       return sendResponse(res, 403, "Invalid refresh token");
     }
   });
-   
+ 
+// Get user by ID
+router.get('/:id', validate(getidschema), (req, res) => {
+  const user = users.find((u) => u.id === parseInt(req.params.id));
+
+  if (!user) {
+    return sendResponse(res, 404, 'User not found');
+  }
+
+  return sendResponse(res, 200, 'User retrieved successfully', user);
+});
 
 module.exports = router;
