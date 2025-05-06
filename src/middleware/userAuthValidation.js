@@ -12,7 +12,8 @@ const registerSchema = Joi.object({
     name: Joi.string().min(3).required(),
     email: Joi.string().email().required(),
     password: Joi.string().min(6).required(),
-    age: Joi.number().integer().min(0).required()
+    age: Joi.number().integer().min(0).required(),
+    role: Joi.string().valid("user", "admin", "moderator").default("user").required(),
 });
 const loginSchema = Joi.object({
     email: Joi.string().email().required(),
@@ -32,10 +33,5 @@ const resetPasswordSchema = Joi.object({
 const refreshTokenSchema =Joi.object({
     token:Joi.string().required()
 })
-const getidschema = Joi.object({
-    name: Joi.string().min(3).required(),
-    email: Joi.string().email().required(),
-    age: Joi.number().integer().min(0).required()
-})
  module.exports = {
-    validate,registerSchema,loginSchema,forgotPasswordSchema,verifyOtpSchema,resetPasswordSchema,refreshTokenSchema,getidschema}
+    validate,registerSchema,loginSchema,forgotPasswordSchema,verifyOtpSchema,resetPasswordSchema,refreshTokenSchema}
