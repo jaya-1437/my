@@ -15,7 +15,7 @@ const express = require('express');
  app.use(express.json());
  
  app.use("/api/v1/users", userRoutes);
- app.use("/posts", postRoutes);
+ app.use("/api/v1/posts", postRoutes);
  app.use("/api/v1/users/Auth",userAuthRoutes);
  app.listen(port, () => {
      console.log(`Server is running on http:localhost:${port}`);
