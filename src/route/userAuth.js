@@ -5,13 +5,23 @@ const {
   validate,
   registerSchema,
   loginSchema,
-  forgotPasswordSchema
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  refreshTokenSchema,
 } = require("../middleware/userAuthValidation");
-
+const { authenticateToken} = require('../middleware/authMiddlewareValidation');
 router.post("/register", validate(registerSchema), authController.register);
 router.post("/login", validate(loginSchema), authController.login);
 router.post("/sendEmailOtp", validate(forgotPasswordSchema), authController.sendEmailOtp);
 router.post("/verify-otp", authController.verifyOtp);
+router.post("/reset-password",validate(resetPasswordSchema),authController.resetPassword);
+router.get("/getUserDetails",authenticateToken,authController.getUserDetail);
+router.get("/getAllUsers",authenticateToken,authController.getAllUsers);
+router.put("/updateUser",authenticateToken,authController.updateUser);
+router.post("/refresh-token",validate(refreshTokenSchema),authController.refreshtoken);
+router.post("getuserbyid/:id",authController.getUserById);
+router.put('/updateuser/:id', authController.updateUserbyid);
+router.delete('/deleteUser/:id',authController.deleteUser);
 // //registration
 // router.post("/register", validate(registerSchema), async (req, res) => {
 //   const { name, email, password, age } = req.body;
